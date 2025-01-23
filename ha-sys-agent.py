@@ -33,6 +33,7 @@ if mqtt_user and not mqtt_pass:
 
 discovery_topic = os.environ.get("HA_SYS_AGENT_DISCO_TOPIC", "homeassistant/device/ha-sys-agent-{hostname}/config").format( hostname=hostname )
 topic_prefix = os.environ.get("HA_SYS_AGENT_TOPIC_PREFIX", "ha-sys-agent/{hostname}").format(hostname=hostname)
+availability_topic = os.environ.get("HA_SYS_AGENT_AVAIL_TOPIC", f"{topic_prefix}/status").format(hostname=hostname)
 
 net_devices = os.environ.get("HA_SYS_AGENT_NET_DEVS")
 net_devices = [ x.strip() for x in net_devices.split(",") ] if net_devices else [] #['eth0']
@@ -151,7 +152,8 @@ def get_discovery_msg(collectors):
                 "state_class":collector.state_class[idx],
                 "object_id": f"ha-sys-agent-{hostname}-{name}",
                 "unique_id": f"ha-sys-agent-{hostname}-{name}",
-                "state_topic": collector.topics[idx]
+                "state_topic": collector.topics[idx],
+                "availability_topic": availability_topic
             }
             if collector.device_class[idx] != None:
                 cmp['device_class'] = collector.device_class[idx]
@@ -227,10 +229,18 @@ if verbose:
 mqttc = mqtt.Client()
 if mqtt_user:
     mqttc.username_pw_set(mqtt_user, mqtt_pass)
+
+def mqtt_on_connect(client, userdata, flags, rc):
+    if rc == 0:
+        print("mqtt connected")
+        mqttc.publish(discovery_topic, json.dumps(discovery_msg), retain=True)
+        client.publish(availability_topic, "online", retain=True)
+
+mqttc.on_connect = mqtt_on_connect
+
+mqttc.will_set(f"{topic_prefix}/status", payload="offline", retain=True)
 mqttc.connect(mqtt_host, 1883, 60)
 mqttc.loop_start() # start the async loop
-
-mqttc.publish(discovery_topic, json.dumps(discovery_msg), retain=True)
 
 # warmup
 for c in collectors:
