@@ -1,14 +1,14 @@
 #!/bin/sh
 
 # use --net host to get access to read net stats for host network devices
-podman run -it --rm \
+podman run -d \
     --pull newer \
     --name ha-sys-agent \
+    --restart always \
     -e HA_SYS_AGENT_MQTT_HOST=192.168.1.3 \
     -e HA_SYS_AGENT_MQTT_USER=homeassistant \
     -e HA_SYS_AGENT_MQTT_PASS=homeassistant \
     -e HA_SYS_AGENT_NET_DEVS=eth0 \
-    -e HA_SYS_AGENT_VERBOSE=1 \
     -e HA_SYS_AGENT_DUS="root:/, tank:/tank, scratch:/scratch, vm:/vm" \
     -v /mnt/tank:/tank:ro \
     -v /mnt/scratch:/scratch:ro \

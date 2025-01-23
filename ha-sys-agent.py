@@ -41,8 +41,6 @@ net_devices = [ x.strip() for x in net_devices.split(",") ] if net_devices else 
 du_filesystems = os.environ.get("HA_SYS_AGENT_DUS") #{ "du_root": "/", "du_tank": "/mnt/tank", "du_scratch": "/mnt/scratch", "du_vm": "/mnt/vm" }
 du_filesystems =  { y[0] : y[1] for y in [ x.strip().split(":") for x in du_filesystems.split(",") ] } if du_filesystems else {}
 
-print(du_filesystems)
-
 class Collector():
     def __init__(self, names, func=None, topics=None, platform="sensor", state_class="measurement", unit_of_measurement=None, device_class=None, icon=None, period=None):
         self.names = [ re.sub('[^0-9a-zA-Z_]+', '_', x) for x in (names if isinstance(names, list) else [names]) ]
