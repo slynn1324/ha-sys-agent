@@ -41,6 +41,8 @@ net_devices = [ x.strip() for x in net_devices.split(",") ] if net_devices else 
 du_filesystems = os.environ.get("HA_SYS_AGENT_DUS") #{ "du_root": "/", "du_tank": "/mnt/tank", "du_scratch": "/mnt/scratch", "du_vm": "/mnt/vm" }
 du_filesystems =  { y[0] : y[1] for y in [ x.strip().split(":") for x in du_filesystems.split(",") ] } if du_filesystems else {}
 
+print(du_filesystems)
+
 class Collector():
     def __init__(self, names, func=None, topics=None, platform="sensor", state_class="measurement", unit_of_measurement=None, device_class=None, icon=None, period=None):
         self.names = [ re.sub('[^0-9a-zA-Z_]+', '_', x) for x in (names if isinstance(names, list) else [names]) ]
@@ -130,6 +132,17 @@ class NetIOCollector(Collector):
         self.net_read_time = now
         return value
 
+class DUCollector(Collector):
+    def __init__(self, name, path):
+        self.path = path
+        self.name = name
+        super().__init__([f"{name}_percent", f"{name}_total", f"{name}_used"], func=None, topics=None, platform="sensor", state_class="measurement", unit_of_measurement=["%", "GB", "GB"] , device_class=[None, "data_size", "data_size"], icon=None, period=600)
+
+    def read(self):
+        du = psutil.disk_usage(self.path)
+        return [ du.percent, round(du.total / 1073741824.0, 1), round(du.used / 1073741824.0, 1) ]
+
+
 def get_discovery_msg(collectors):
     msg = {
         "dev":{
@@ -205,11 +218,7 @@ collectors.append( Collector( ["load_1", "load_5", "load_15"], lambda: [round(x,
 collectors.append( Collector("memory_percent", lambda: psutil.virtual_memory().percent , unit_of_measurement="%"))
 
 for name,path in du_filesystems.items():
-    collectors.append( Collector( [ f"{name}_percent", f"{name}_total", f"{name}_used" ], 
-                                    lambda: ( du := psutil.disk_usage(path) , [ du.percent, round(du.total / 1073741824, 1), round(du.used / 1073741824, 1) ] )[-1] , 
-                                    period=3600,
-                                    unit_of_measurement=["%", "GB", "GB"],
-                                    device_class=[None, "data_size", "data_size"]))
+    collectors.append( DUCollector(name,path) )
 
 for name,f in temperature_files.items():
     collectors.append( Collector( name, lambda: float(f.read_text().strip()) / 1000.0 , period=600 if name.startswith("disk") else None,
