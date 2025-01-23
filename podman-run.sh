@@ -10,6 +10,6 @@ podman run -d \
     -e HA_SYS_AGENT_MQTT_PASS=homeassistant \
     -e HA_SYS_AGENT_NET_DEVS=eth0 \
     --net host \
-    ghcr.io/slynn1324/ha-sys-agent:main
+    ghcr.io/slynn1324/ha-sys-agent:latest
     
     #ha-sys-agent
