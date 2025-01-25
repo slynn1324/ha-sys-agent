@@ -78,7 +78,7 @@ class Collector():
     def read(self):
         if self.func == None:
             raise NotImplementedError(f"func was not provided, nor was it implemented in a subclass for collector {self.names}")
-        return self.func()
+        return self.func(self)
 
 # collector subclass to collect net io stats for all selected netdevs with only one read from psutil 
 # each device adds 4 metrics - {dev}_rx, {dev}_rx_kbps, {dev}_tx, {dev}_tx_kbps
@@ -139,6 +139,15 @@ class DUCollector(Collector):
     def read(self):
         du = psutil.disk_usage(self.path)
         return [ du.percent, round(du.total / 1073741824.0, 1), round(du.used / 1073741824.0, 1) ]
+
+class SysFileTempCollector(Collector):
+    def __init__(self, name, file, period=None):
+        self.file = file
+        self.name = name
+        super().__init__(name, func=None, topics=None, platform="sensor", state_class="measurement", unit_of_measurement="°C", device_class="temperature", icon=None, period=period)
+
+    def read(self):
+        return float(self.file.read_text().strip()) / 1000.0
 
 
 def get_discovery_msg(collectors):
@@ -210,17 +219,17 @@ def get_temperature_files():
 temperature_files = get_temperature_files()
 
 collectors = []
-collectors.append( Collector("cpu_percent", lambda: psutil.cpu_percent(), unit_of_measurement="%"))
-collectors.append( Collector("cpu_freq", lambda: int(psutil.cpu_freq(percpu=False).current), device_class="frequency", unit_of_measurement="khz"))
-collectors.append( Collector( ["load_1", "load_5", "load_15"], lambda: [round(x,2) for x in list(psutil.getloadavg())] , unit_of_measurement="loadavg" ))
-collectors.append( Collector("memory_percent", lambda: psutil.virtual_memory().percent , unit_of_measurement="%"))
+collectors.append( Collector("cpu_percent", lambda c: psutil.cpu_percent(), unit_of_measurement="%"))
+collectors.append( Collector("cpu_freq", lambda c: int(psutil.cpu_freq(percpu=False).current), device_class="frequency", unit_of_measurement="khz"))
+collectors.append( Collector( ["load_1", "load_5", "load_15"], lambda c: [round(x,2) for x in list(psutil.getloadavg())] , unit_of_measurement="loadavg" ))
+collectors.append( Collector("memory_percent", lambda c: psutil.virtual_memory().percent , unit_of_measurement="%"))
 
 for name,path in du_filesystems.items():
     collectors.append( DUCollector(name,path) )
 
 for name,f in temperature_files.items():
-    collectors.append( Collector( name, lambda: float(f.read_text().strip()) / 1000.0 , period=600 if name.startswith("disk") else None,
-                                 unit_of_measurement="°C", device_class="temperature" ))
+    collectors.append( SysFileTempCollector(name, f, period=600 if name.startswith("disk") else None) )
+    #collectors.append( Collector( name, lambda c: float(temperature_files[c.names[0]].read_text().strip()) / 1000.0 , period=600 if name.startswith("disk") else None, unit_of_measurement="°C", device_class="temperature" ))
 
 collectors.append(NetIOCollector(net_devices))
 
