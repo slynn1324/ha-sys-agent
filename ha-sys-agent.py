@@ -170,7 +170,7 @@ def get_discovery_msg(collectors):
                 "name": name,
                 "platform":collector.platform[idx],
                 "state_class":collector.state_class[idx],
-                "default_entity_id": f"ha-sys-agent-{hostname}-{name}",
+                "default_entity_id": f"sensor.ha-sys-agent-{hostname}-{name}",
                 "unique_id": f"ha-sys-agent-{hostname}-{name}",
                 "state_topic": collector.topics[idx],
                 "availability_topic": availability_topic
@@ -223,6 +223,7 @@ collectors.append( Collector("cpu_percent", lambda c: psutil.cpu_percent(), unit
 collectors.append( Collector("cpu_freq", lambda c: int(psutil.cpu_freq(percpu=False).current), device_class="frequency", unit_of_measurement="kHz"))
 collectors.append( Collector( ["load_1", "load_5", "load_15"], lambda c: [round(x,2) for x in list(psutil.getloadavg())] , unit_of_measurement="loadavg" ))
 collectors.append( Collector("memory_percent", lambda c: psutil.virtual_memory().percent , unit_of_measurement="%"))
+collectors.append( Collector("uptime", lambda c: int(time.time() - psutil.boot_time()), unit_of_measurement="s", device_class="duration"))
 
 for name,path in du_filesystems.items():
     collectors.append( DUCollector(name,path) )
