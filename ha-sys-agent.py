@@ -94,7 +94,7 @@ class NetIOCollector(Collector):
         for d in self.devices:
             names.extend( [ f"{d}_rx", f"{d}_rx_kbps", f"{d}_tx", f"{d}_tx_kbps" ] )
             scs.extend( [ "total_increasing", "measurement", "total_increasing", "measurement" ] )
-            uoms.extend( ["bytes", "kbps", "bytes", "kbps"] )
+            uoms.extend( ["B", "kbit/s", "B", "kbit/s"] )
             dcs.extend( ["data_size", "data_rate", "data_size", "data_rate"] )
         super().__init__(names, unit_of_measurement=uoms, device_class=dcs)
 
@@ -170,7 +170,7 @@ def get_discovery_msg(collectors):
                 "name": name,
                 "platform":collector.platform[idx],
                 "state_class":collector.state_class[idx],
-                "object_id": f"ha-sys-agent-{hostname}-{name}",
+                "default_entity_id": f"ha-sys-agent-{hostname}-{name}",
                 "unique_id": f"ha-sys-agent-{hostname}-{name}",
                 "state_topic": collector.topics[idx],
                 "availability_topic": availability_topic

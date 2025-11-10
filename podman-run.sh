@@ -10,6 +10,7 @@ podman run -d \
     -e HA_SYS_AGENT_MQTT_PASS=homeassistant \
     -e HA_SYS_AGENT_NET_DEVS=eth0 \
     -e HA_SYS_AGENT_DUS="root:/, tank:/tank, scratch:/scratch, vm:/vm" \
+    -e HA_SYS_AGENT_VERBOSE=1 \
     -v /mnt/tank:/tank:ro \
     -v /mnt/scratch:/scratch:ro \
     -v /mnt/vm:/vm:ro \
