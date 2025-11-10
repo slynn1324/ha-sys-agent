@@ -220,7 +220,7 @@ temperature_files = get_temperature_files()
 
 collectors = []
 collectors.append( Collector("cpu_percent", lambda c: psutil.cpu_percent(), unit_of_measurement="%"))
-collectors.append( Collector("cpu_freq", lambda c: int(psutil.cpu_freq(percpu=False).current), device_class="frequency", unit_of_measurement="khz"))
+collectors.append( Collector("cpu_freq", lambda c: int(psutil.cpu_freq(percpu=False).current), device_class="frequency", unit_of_measurement="kHz"))
 collectors.append( Collector( ["load_1", "load_5", "load_15"], lambda c: [round(x,2) for x in list(psutil.getloadavg())] , unit_of_measurement="loadavg" ))
 collectors.append( Collector("memory_percent", lambda c: psutil.virtual_memory().percent , unit_of_measurement="%"))
 
